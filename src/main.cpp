@@ -1,4 +1,4 @@
-// Консольная программа для демонстрации
+
 
 #include <fcntl.h>
 
@@ -15,19 +15,17 @@
 #include "arraysequence.h"
 #include "common.hpp"
 #include "isorter.h"
+#include "linkedlistsequence.h"
 #include "menu.h"
 
 using namespace std::chrono;
 
-#define PRINT(x) wcout << #x << L" = " << x << endl
 
-// Создание случайного массива для тестов
 template <class T>
 Sequence<T> *generateArray() {}
 
 template <int>
 Sequence<int> *generateArray() {
-  // Seed with a real random value, if available
   std::random_device rd;
   std::default_random_engine e1(rd());
   std::uniform_int_distribution<int> uniform_dist(-1000000, 1000000);
@@ -102,10 +100,6 @@ void graph() {
   */
 }
 
-// Функция сравнения элементов a и b
-// a < b: -1
-// a == b: 0
-// a > b: +1
 inline int cmp(int a, int b) { return (a < b) ? -1 : (a == b) ? 0 : 1; }
 
 wstring toWS(string s) { return wstring(s.begin(), s.end()); }
@@ -113,14 +107,15 @@ string toS(wstring s) { return string(s.begin(), s.end()); }
 
 // MAX_SIZE - максимальное количество элементов в массиве
 template <typename T>
-void TestSortFunc(Sequence<T> *s, string sortName, ISorter<T> *sorter, string genName, int MAX_SIZE) {
-  string fileName = "../graphics/" + genName + "/" + sortName + ".txt";
+void TestSortFunc(Sequence<T> *s, string sortName, ISorter<T> *sorter, string genName, string structName,
+                  int MAX_SIZE) {
+  string fileName = "../graphics/" + genName + "/" + sortName + "_" + structName + ".txt";
   wcout << toWS(fileName) << endl;
   ofstream file(fileName, ios_base::trunc);
   const int POINTS = 100;
   const int STEP = MAX_SIZE / POINTS;
 
-  for (int n = STEP; n <= MAX_SIZE; n += STEP) {  // n - размер массива
+  for (int n = STEP; n <= MAX_SIZE; n += STEP) {
     // Генерация последовательности
     Sequence<T> *seq = s->getSubsequence(0, n - 1);
 
@@ -130,8 +125,10 @@ void TestSortFunc(Sequence<T> *s, string sortName, ISorter<T> *sorter, string ge
     auto time = duration_cast<microseconds>(end - begin);
 
     // Проверяем что массив отсортирован
+    /*
     for (int i = 0; i < seq->getLength() - 1; i++) {
       if ((*seq)[i] > (*seq)[i + 1]) {
+        wprintf(L"Ошибка\n");
         string path = "../";
         path.append("Error.txt");
         ofstream err(path, ios_base::trunc);
@@ -144,24 +141,53 @@ void TestSortFunc(Sequence<T> *s, string sortName, ISorter<T> *sorter, string ge
         return;
       }
     }
-
+    */
+    delete seq;
     file << n << " " << time.count() / 1e3 << "\n";
     // wcout << n << " " << time.count() / 1e3 << "\n";
   }
+
   file.close();
 }
 
-void Bench(IGenerator *gen, int MAX_SIZE) {
-  Sequence<int> *seq = gen->generate(MAX_SIZE);
-  TestSortFunc(seq, "BubbleSort", new BubbleSort<int>(), gen->name(), MAX_SIZE / 50);
-  TestSortFunc(seq, "ShellSort", new ShellSort<int>(), gen->name(), MAX_SIZE / 50);
-  TestSortFunc(seq, "ShellSort2", new ShellSort2<int>(), gen->name(), MAX_SIZE / 50);
-  TestSortFunc(seq, "ShakerSort", new ShakerSort<int>(), gen->name(), MAX_SIZE / 50);
-  TestSortFunc(seq, "InsertionSort", new InsertionSort<int>(), gen->name(), MAX_SIZE / 50);
-  TestSortFunc(seq, "MergeSort", new MergeSort<int>(), gen->name(), MAX_SIZE);
-  TestSortFunc(seq, "QuickSort", new QuickSort<int>(), gen->name(), MAX_SIZE);
-  TestSortFunc(seq, "HoarSort", new HoarSort<int>(), gen->name(), MAX_SIZE);
-  TestSortFunc(seq, "RandomizedQuickSort", new RandomizedQuickSort<int>(), gen->name(), MAX_SIZE);
+template <class S>
+void Bench(IGenerator *gen, string structName, int MAX_SIZE) {
+  Sequence<int> *seq = gen->generate(new S(), MAX_SIZE);
+  TestSortFunc(seq, "BubbleSort", new BubbleSort<int>(), gen->name(), structName, MAX_SIZE / 50);
+  TestSortFunc(seq, "ShellSort", new ShellSort<int>(), gen->name(), structName, MAX_SIZE / 50);
+  TestSortFunc(seq, "ShellSort2", new ShellSort2<int>(), gen->name(), structName, MAX_SIZE / 50);
+  TestSortFunc(seq, "ShakerSort", new ShakerSort<int>(), gen->name(), structName, MAX_SIZE / 50);
+  TestSortFunc(seq, "InsertionSort", new InsertionSort<int>(), gen->name(), structName, MAX_SIZE / 50);
+  if (gen->name() != "sorted" and gen->name() != "decreasing")
+    TestSortFunc(seq, "QuickSort", new QuickSort<int>(), gen->name(), structName, MAX_SIZE);
+  TestSortFunc(seq, "MergeSort", new MergeSort<int>(), gen->name(), structName, MAX_SIZE);
+  TestSortFunc(seq, "HoarSort", new HoarSort<int>(), gen->name(), structName, MAX_SIZE);
+  TestSortFunc(seq, "RandomizedQuickSort", new RandomizedQuickSort<int>(), gen->name(), structName, MAX_SIZE);
+}
+
+template <class S>
+void benchAll(string structName) {
+  IGenerator *gen = new RandomArrayGenerator();
+  int MAX_SIZE = 100000;  // 500000;
+  Bench<S>(gen, structName, MAX_SIZE);
+
+  IGenerator *gen2 = new SortedArrayGenerator();
+  Bench<S>(gen2, structName, MAX_SIZE);
+
+  IGenerator *gen3 = new DecreasingArrayGenerator();
+  Bench<S>(gen3, structName, MAX_SIZE);
+
+  IGenerator *gen4 = new SwapArrayGenerator();
+  Bench<S>(gen4, structName, MAX_SIZE);
+}
+
+// функция для демонстрации работы dynamic_cast<>()
+template <class T>
+void what_is_you(Sequence<T> *seq) {
+  if (dynamic_cast<ArraySequence<T> *>(seq))
+    wprintf(L"== Массив ==\n");
+  else
+    wprintf(L"== Лист ==\n");
 }
 
 // Основная программа
@@ -174,18 +200,13 @@ int main() {
   _setmode(_fileno(stderr), _O_U16TEXT);
 #endif
   wprintf(L"== Тестирование операций ==\n");
-  IGenerator *gen = new RandomArrayGenerator();
-  int MAX_SIZE = 500000;
-  Bench(gen, MAX_SIZE);
+  auto list = new LinkedListSequence<int>();
+  auto array = new ArraySequence<int>();
+//    what_is_you(list);
+//    what_is_you(array);
+//  benchAll<ArraySequence<int>>("array");
+ benchAll<LinkedListSequence<int>>("list");
 
-  IGenerator *gen2 = new SortedArrayGenerator();
-  Bench(gen2, MAX_SIZE);
-
-  IGenerator *gen3 = new DecreasingArrayGenerator();
-  Bench(gen3, MAX_SIZE);
-
-  IGenerator *gen4 = new SwapArrayGenerator();
-  Bench(gen4, MAX_SIZE);
   //  MenuItem menu[] = {{L"Целые числа (int)", main_menu<int>},
   //                     {L"Вещественные числа (double)", main_menu<double>},
   //                     {L"Строки/символы (string)", main_menu<wstring>}};

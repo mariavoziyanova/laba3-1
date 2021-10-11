@@ -1,117 +1,92 @@
 #pragma once
 
-#include <cwchar>
-
-#include "dynamicarray.h"
+#include "linkedlist.h"
 #include "sequence.h"
 
-
 template <class T>
-class ArraySequence : public Sequence<T> {
- private:
-  DynamicArray<T> data;  // Массив данных
+class LinkedListSequence : public Sequence<T> {
+  LinkedList<T> data;  // Массив данных
+  void checkIndex(int index) const {
+    if (index < 0)
+      throw IndexOutOfRange(string("Index ") + to_string(index) + " out of range 0.." + to_string(getLength() - 1));
+    if (index >= getLength())
+      throw IndexOutOfRange(string("Index ") + to_string(index) + " out of range 0.." + to_string(getLength() - 1));
+  }
+
  public:
   // Копировать элементы из переданного массива
-  ArraySequence(T *data, int count) : data(data, count) {}
-
-  // Конструктор в который передаётся только размер массива
-  explicit ArraySequence(int count) : data(count) {}
-
-  // Создать пустой список на основе массива
-  ArraySequence() : data(){};
-
+  LinkedListSequence(T *items, int count) : data(items, count) {}
+  // Создать пустой список
+  LinkedListSequence() : data(){};
   // Копирующий конструктор
-  explicit ArraySequence(const DynamicArray<T> &array) : data(array){};
-
-
-  T getFirst() const override { return data.get(0); };
-
-
-  T getLast() const override { return data.get(data.getSize() - 1); };
-
+  explicit LinkedListSequence(const LinkedList<T> &list) : data(list) {};
+  // == Декомпозиция ==
+  // Получить первый элемент в списке
+  T getFirst() const override { return data.getFirst(); };
+  // Получить последний элемент в списке
+  T getLast() const override { return data.getLast(); };
   // Получить элемент по индексу
   T get(int index) const override { return data.get(index); };
-
   // Перегруженные операторы
-  T operator[](int i) const override {
-    return data[i];  // Получаем значение a = obj[1]
-  }
+  T operator[](int i) const { return data[i]; }
 
-  T &operator[](int i) override {
-    return data[i];
-  }
-
+  T &operator[](int i) { return data[i]; };
   // Получить список из всех элементов, начиная с startIndex и заканчивая endIndex
   Sequence<T> *getSubsequence(int startIndex, int endIndex) const override {
-    if (startIndex > endIndex) {  // Проверяем корректность индексов
-      throw IndexOutOfRange(string("Index startIndex <= endIndex"));
-    }
-
-    int size = endIndex - startIndex + 1;  // Размер последовательности
-    DynamicArray<T> da(size);
-    for (int i = 0; i < size; i++) {
-      da[i] = get(startIndex + i);
-    }
-
-    return new ArraySequence<T>(da);
+    checkIndex(startIndex);
+    checkIndex(endIndex);
+//    auto *res = new LinkedListSequence<T>();
+//    for (int index = startIndex; index <= endIndex; index++) {
+//      res->append(data.get(index));
+//    }
+    LinkedList<T> res = data.getSubList(startIndex,endIndex);
+    return new LinkedListSequence<T>(res);
   }
 
   // Получить длину списка
-
-  int getLength() const override { return data.getSize(); }
+  int getLength() const override { return data.getLength(); }
 
   // == Операции ==
   // Добавляет элемент в конец списка
   void append(T item) override { data.append(item); };
-
   // Добавляет элемент в начало списка
   void prepend(T item) override { data.prepend(item); };
-
   // Вставляет элемент в заданную позицию
-
   void insertAt(T item, int index) override { data.insertAt(item, index); };
-
   // Сцепляет два списка
   Sequence<T> *concat(Sequence<T> *list) override {
-    auto *result = new ArraySequence<T>(this->data);
-    result->data.resize(getLength() + list->getLength());
+    Sequence<T> *res = new LinkedListSequence<T>(*this);
     for (int i = 0; i < list->getLength(); i++) {
-      result->data.set(getLength() + i, list->get(i));
+      res->append(list->get(i));
     }
-    return result;
+    return res;
   };
-
   // Удаление элемента по индексу
   void removeAt(int index) override { data.removeAt(index); }
-
   // Печать на экран всех элементов
   void print() override { data.print(); }
-
-  // == Виртуальный деструктор ==
-  virtual ~ArraySequence<T>() = default;
-
+  // == Деструктор ==
+  virtual ~LinkedListSequence() = default;
   Sequence<T> *map(T (*f)(T)) const override {
-    Sequence<T> *res = new ArraySequence<T>();
+    auto *res = new LinkedListSequence<T>();
     for (int i = 0; i < getLength(); i++) {
       res->append(f(data.get(i)));
     }
     return res;
   }
-
   Sequence<T> *where(bool (*h)(T)) const override {
-    auto *res = new ArraySequence<T>;
+    auto *res = new LinkedListSequence<T>;
     for (int i = 0; i < getLength(); i++) {
       T item = data.get(i);
-      if (h(item)) {  // Если h возвращает true - добавляем элемент в результат
+      if (h(item)) {
         res->append(item);
       }
     }
     return res;
   }
-
   T reduce(T (*f)(T, T)) const override {
-    T result = data.get(0);
-    for (int i = 1; i < data.getSize(); i++) {
+    T result = data.getFirst();
+    for (int i = 1; i < data.getLength(); i++) {
       result = f(result, data.get(i));
     }
     return result;

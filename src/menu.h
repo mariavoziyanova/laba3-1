@@ -17,14 +17,13 @@ struct MenuItem {
 //  ... (varargs) - пункты меню (массив строк)
 // На выходе: выбор пользователя
 void menuLoop(const wchar_t *title, int N, MenuItem menu[]) {
-  assert(N >= 2);  // Хотя бы 2 варианта должно быть для выбора
+  assert(N >= 2);
   while (true) {
-    wprintf(L"\n%ls (0 - выход):\n", title);  // Печатаем заголовок меню ls - строчка в формате юникод
+    wprintf(L"\n%ls (0 - выход):\n", title);
     // Печатаем меню
-    for (int no = 1; no <= N; no++) {  // no=1,2,3...N - номер пункта меню
+    for (int no = 1; no <= N; no++) {
       wprintf(L"  %d. %ls\n", no, menu[no - 1].name);
     }
-    // Печатаем предложение о выборе
     wprintf(L"Выберите (1..%d): ", N);
     int choice;  // Выбор пользователя
     wcin >> choice;

@@ -5,35 +5,29 @@
 
 #include "common.hpp"
 
-// АТД контейнер: динамический массив
+
 template <class T>
 class DynamicArray {
   int size;       // Количество элементов массива
-  T *data;        // Данные массива
-  bool *defined;  // Задан ли элемент массива?
-  // Проверка - является ли индекс допустимым? Если нет => генерируется исключение
+  T *data;
+  bool *defined;
   void checkIndex(int index) const {
-    // Может выбрасывать исключения:
-    // − IndexOutOfRange (если индекс отрицательный, больше/равен числу элементов, или указывает на не заданный элемент)
     if (index < 0 || index >= size) {
       throw IndexOutOfRange(string("Index ") + to_string(index) + " out of range 0.." + to_string(size - 1));
     }
   }
 
- public:  // Делаем доступными извне класса конструкторы и методы-операции
-  // == Создание объекта - конструкторы ==
-  // Копировать элементы из переданного массива
+ public:
   // - data - массив значений типа T для инициализации динамического массива
   // - count - количество этих значений
   DynamicArray(T *items, int count) : size(count) {
     if (size < 0) throw IndexOutOfRange("Size < 0");
     data = new T[size];
     defined = new bool[size];
-    memcpy(data, items, sizeof(T) * size);  // Копируем как кусочек памяти: data <- data
-    // Считаем что изначально все элементы заданы
+    memcpy(data, items, sizeof(T) * size);
     for (int i = 0; i < size; i++) {
       // data[i] = data[i];
-      defined[i] = true;  // Элемент задан
+      defined[i] = true;
     }
   };
 
@@ -56,8 +50,7 @@ class DynamicArray {
     }
   }
 
-  // Копирующий конструктор - создаёт обьект-копию другого обьекта
-  // Цель: менять новый обьект не затрагивая старый
+  // Копирующий конструктор
   DynamicArray(const DynamicArray<T> &dynamicArray) {
     size = dynamicArray.size;
     // Копируем элементы
@@ -68,49 +61,59 @@ class DynamicArray {
     memcpy(defined, dynamicArray.defined, dynamicArray.size * sizeof(bool));
   }
 
-  // == Деструктор - очистка памяти ==
+  // == Деструктор ==
   ~DynamicArray() {
     delete[] data;
-    data = nullptr;  // NULL - нулевой указатель, nullptr - нулевой указатель, который не будет автоматически
-    // приводиться к другим типам
+    data = nullptr;
     delete[] defined;
     defined = nullptr;
   }
 
+  vector<T> asVector() const {
+    vector<T> vec(size);
+    for (int i = 0; i < size; i++) vec[i] = data[i];
+
+    return vec;
+  }
+
+  void updateFromVector(const vector<T> &vec) {
+    if (vec.size() != size) throw bad_array_new_length();
+
+    for (int i = 0; i < size; i++) data[i] = vec[i];
+  }
+
   // == Декомпозиция ==
-  T &get(int index) const {  // Получить элемент по индексу
-    checkIndex(index);  // Проверяем индекс и генерируем исключение если он неверный
+  T &get(int index) const {
+    checkIndex(index);
     if (!defined[index]) {
       throw IndexOutOfRange(string("Element with index ") + to_string(index) + " not defined");
     }
     return data[index];
   }
 
-  // Получить размер массива
+
   int getSize() const { return size; }
 
   // == Операции ==
   // Задать значение элемента по индексу
   void set(int index, T value) {
-    checkIndex(index);  // Может выбросить IndexOutOfRange
+    checkIndex(index);
     data[index] = value;
-    // Если элемент был "не задан" => он становится задан
     defined[index] = true;
   }
 
-  // Перегруженные операторы чтобы можно было обращаться к элементу как в
-  // обычном массиве
-  T operator[](size_t index) const {  // Получение значения
+
+  T operator[](size_t index) const {
     return get(index);
   }
 
-  T &operator[](size_t index) {  // Чтобы делать присваивание так: dynamicArray[1] = 1233;
+  T &operator[](size_t index) {
     checkIndex(index);
     defined[index] = true;
     return data[index];
   }
 
-  // Изменить размер массива (уменьшить или увеличить)
+  // Изменить размер массива
   void resize(int newSize) {
     if (newSize < 0) {
       throw bad_array_new_length();
@@ -124,22 +127,19 @@ class DynamicArray {
       newDefined[i] = defined[i];
     }
     memcpy(newData, data, sizeof(T) * min(size, newSize));
-    // Копируем какие элементы определены
     memcpy(newDefined, defined, sizeof(bool) * min(size, newSize));
-    // Оставшиеся заполняем false - будет работать только если newSize > size
     for (int i = size; i < newSize; i++) {
       newDefined[i] = false;
     }
     // Обновляем количество элементов, сами элементы и какие определены
     size = newSize;
-    delete[] data;  // Очищаем память
+    delete[] data;
     data = newData;
-    delete[] defined;  // Очищаем память
+    delete[] defined;
     defined = newDefined;
   }
 
   // Меняем элементы i и j местами
-  // Может быть использовано для сортировки и других алгоритмов
   void swap(int i, int j) {
     T temp = get(i);
     set(i, get(j));
@@ -165,11 +165,9 @@ class DynamicArray {
   }
 
   // Вставляет элемент в заданную позицию
-  // Может выбрасывать исключения:
-  // − IndexOutOfRange (если индекс отрицательный или больше/равен числу элементов)
   void insertAt(T item, int index) {
-    resize(size + 1);  // Увеличиваем размер на 1
-    checkIndex(index);  // Проверяем индекс и генерируем исключение если он неверный
+    resize(size + 1);
+    checkIndex(index);
     // Сдвигаем все элементы вправо
     for (int i = size - 1; i > index; i--) {
       data[i] = data[i - 1];
@@ -180,8 +178,8 @@ class DynamicArray {
 
   // Удаление элемента по индексу
   void removeAt(const int index) {
-    checkIndex(index);  // Проверяем индекс и генерируем исключение если он неверный
-    for (int i = index + 1; i < size; i++) {  // Сдвигаем все элементы начиная с index+1 влево на один
+    checkIndex(index);
+    for (int i = index + 1; i < size; i++) {
       data[i - 1] = data[i];  // Сдвигаем значение
       defined[i - 1] = defined[i];
     }

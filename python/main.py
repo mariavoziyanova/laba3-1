@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-direct = "sorted"
+direct = "swap"
 dir_path = "../" + direct
 # dir_path = "../random"
 # graph_path = "graphics"
@@ -10,7 +10,10 @@ dir_path = "../" + direct
 plt.rcParams['figure.figsize'] = (10, 7)
 
 for file_path in os.listdir(dir_path):
-    if file_path in {"InsertionSort.txt", "ShellSort.txt", "ShellSort2.txt", "BubbleSort.txt", "ShakerSort.txt"}:
+    if file_path.find("array") == -1:
+        continue
+    sort_name = file_path[0:file_path.find("_")]
+    if sort_name in {"InsertionSort", "ShellSort", "ShellSort2", "BubbleSort", "ShakerSort"}:
         continue
     file_name = file_path[:-4]
 
@@ -40,7 +43,7 @@ for file_path in os.listdir(dir_path):
 
     plt.plot(dots_x_new, dots_y_new, label=file_name)
 
-    plt.ylabel('Time')
+    plt.ylabel('Time, ms')
     plt.xlabel('Size')
     plt.title(f'Sorting algorithms comparison ({direct})')
 
@@ -49,4 +52,4 @@ for file_path in os.listdir(dir_path):
 plt.legend()
 # plt.show()
 plt.grid()
-plt.savefig(f"graphics_{direct}.png")
+plt.savefig(f"graphics_{direct}_array.png")

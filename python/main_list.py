@@ -10,10 +10,11 @@ dir_path = "../" + direct
 plt.rcParams['figure.figsize'] = (10, 7)
 
 for file_path in os.listdir(dir_path):
-    if file_path.find("array") == -1:
+    if file_path.find("list") == -1:
         continue
+
     sort_name = file_path[0:file_path.find("_")]
-    if sort_name not in {"InsertionSort", "ShellSort", "ShellSort2", "BubbleSort", "ShakerSort"}:
+    if sort_name in {"InsertionSort", "ShellSort", "ShellSort2", "BubbleSort", "ShakerSort"}:
         continue
     file_name = file_path[:-4]
 
@@ -52,4 +53,4 @@ for file_path in os.listdir(dir_path):
 plt.legend()
 # plt.show()
 plt.grid()
-plt.savefig(f"graphics_{direct}_array_slow.png")
+plt.savefig(f"graphics_{direct}_list.png")
