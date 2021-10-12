@@ -35,6 +35,18 @@ Sequence<int> *generateArray() {
   for (int i = 0; i < 100; i++) sequence->append(rand() % INT32_MAX);
 }
 
+Sequence<int> *generateSequence(Sequence<int> *a, int n){
+  random_device rd;
+  mt19937 mersenne(rd());
+  for (int i = 0; i < n; ++i) {
+    int value = int(mersenne())%1000;
+    if (value % 2 == 0)
+      value = -value;
+    a->append(value);
+  }
+  return a;
+}
+
 template <typename T>
 void TestSort(string sortName, Sequence<T> *sequence) {}
 
@@ -183,7 +195,7 @@ void benchAll(string structName) {
 
 // функция для демонстрации работы dynamic_cast<>()
 template <class T>
-void what_is_you(Sequence<T> *seq) {
+void who_are_you(Sequence<T> *seq) {
   if (dynamic_cast<ArraySequence<T> *>(seq))
     wprintf(L"== Массив ==\n");
   else
@@ -202,10 +214,10 @@ int main() {
   wprintf(L"== Тестирование операций ==\n");
   auto list = new LinkedListSequence<int>();
   auto array = new ArraySequence<int>();
-//    what_is_you(list);
-//    what_is_you(array);
+  //  who_are_you(list);
+  //  who_are_you(array);
 //  benchAll<ArraySequence<int>>("array");
- benchAll<LinkedListSequence<int>>("list");
+// benchAll<LinkedListSequence<int>>("list");
 
   //  MenuItem menu[] = {{L"Целые числа (int)", main_menu<int>},
   //                     {L"Вещественные числа (double)", main_menu<double>},
@@ -216,4 +228,113 @@ int main() {
   //    wcout << L"Exception: " << ex.what() << endl << endl;
   //  }
   //  graph();
+  Sequence<int> *seq;
+  while (true)
+  {
+    wprintf(L"Создать array(1) или создать list(2)\n");
+
+    int c;
+    wcin>>c;
+    if (c < 1 || c > 2)
+      wprintf(L"Нет такой операции\n");
+    wprintf(L"Введите размер\n");
+    int n;
+    wcin>>n;
+    wprintf(L"1 -заполнить случайными числами, 2 - ввод с клавиатуры\n");
+    int h;
+    wcin>>h;
+    if (h< 1 ||  h> 2)
+      wprintf(L"Нет такой операции\n");
+    if(h==1)
+    {
+      if(c==1)
+      {
+        seq = generateSequence(new ArraySequence<int>, n);
+        seq->print();
+      }
+      else {
+        seq = generateSequence(new LinkedListSequence<int>, n);
+        seq->print();
+      }
+    }else
+    {
+      int items[n];
+      for(int i=0;i<n;i++)
+        wcin>>items[i];
+      if(c==1)
+      {
+        seq = new ArraySequence<int>(items, n);
+        seq->print();
+      }
+      else
+      {
+        seq = new LinkedListSequence<int>(items,n);
+        seq->print();
+      }
+    }
+    wprintf(L"Выберите сортировку:\n1 - HoarSort\n2 - QuickSort\n3 - InsertSort\n4 - BubbleSort\n5 - ShellSort\n6 - ShellSort2\n7 - RandomizedQuickSort\n8 - ShakerSort\n9 - MergeSort\n");
+    wcin>>c;
+    if (c> 9 ||  c<=0)
+      wprintf(L"Нет такой сортировки\n");
+    switch (c)
+    {
+      case 1:
+      {
+        HoarSort<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+      case 2:
+      {
+        QuickSort<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+      case 3:
+      {
+        InsertionSort<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+      case 4:
+      {
+        BubbleSort<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+      case 5:
+      {
+        ShellSort<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+      case 6:
+      {
+        ShellSort2<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+      case 7:
+      {
+        RandomizedQuickSort<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+      case 8:
+      {
+        ShakerSort<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+      case 9:
+      {
+        MergeSort<int> sort;
+        sort.Sort(seq, cmp)->print();
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
 }
